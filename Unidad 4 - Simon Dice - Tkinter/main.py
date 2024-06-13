@@ -125,7 +125,7 @@ class SimonDice:
         self.ventana.update()               # Para actualizar el fondo porque hubo un cambio de color, y quiero mostrarlo.
         self.sonido(frecuencia, duracion)   # El beep suena al hacer el cambio de color.
         boton.configure(bg=colorInicial)    # Lo manda a su color original.
-        self.ventana.update()              # Se actualiza la ventana para ver ese cambio.
+        self.ventana.update()               # Se actualiza la ventana para ver ese cambio.
         
 
     def sonido(self, frecuencia, duracion):
