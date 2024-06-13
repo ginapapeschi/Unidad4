@@ -43,11 +43,39 @@ class SimonDice:
         # Como no se manda parámetros en el command, se pone directamente el método que se va a ejecutar.
         
         self.botonIniciar.place(x=175, y=40)
-        self.etiqueta = Label(self.ventana, text="Marcador: 0\nPuntaje récord: 0") # Se coloca en 0 porque ya se sabe en qué valor INICIA.
+        self.etiqueta = Label(self.ventana, text="\nMarcador: 0\nMayor puntaje: 0") # Se coloca en 0 porque ya se sabe en qué valor INICIA.
         self.etiqueta.place(x=40, y=30)
         
-    def presionar(self):
-        print("")
+    def presionar(self, color):          # Se ejecuta en el momento en que el usuario presione el botón de alguno de los colores.
+        if self.juegoInicial == True:    # Sólo se revisa en qué momento el usuario aprieta los botones cuando esta variable sea igual a True.
+            if len(self.secuencia) >= self.contador - 1: # Ya que el contador va en una posición adelantada.
+                if self.secuencia[self.contador] == color: # Color es el parámetro enviado por cada botón al ser presionado (usuario atinó al botón).
+                    self.contador += 1               # Para que vaya avanzando
+                    if color == "Verde":
+                        self.sonido(600, 500)
+                    elif color == "Rojo":
+                        self.sonido(500, 500)
+                    elif color == "Amarillo":
+                        self.sonido(700, 500)
+                    elif color == "Azul":
+                        self.sonido(800, 500)
+                    self.revisarTurno() # Llama a esta función para saber si este botón que presionó el usuario fue el último o faltan más.
+                    self.etiqueta.config(text="\nMarcador: " + str(self.marcador) + "\nMayor puntaje: " + str(self.mayorPuntaje)) # Se cambia la etiqueta luego de que el usuario presionó los botones
+
+                else:                   # Si el usuario se equivocó al presionar un botón (DEBE TERMINAR EL JUEGO)
+                    messagebox.showinfo("Perdiste mogo", "\nPuntaje: " + str(self.marcador))
+                    if self.marcador > self.mayorPuntaje:   # Se establece un nuevo récord en caso de ser así.
+                        self.mayorPuntaje = self.marcador
+                    self.etiqueta.config(text="\nMarcador: " + str(self.marcador) + "\nMayor puntaje: " + str(self.mayorPuntaje))
+
+        # SE RESETEAN LOS ATRIBUTOS
+                    self.juegoInicial = False               # Para que el usuario no siga jugando y deba presionar el botón de INICIAR para volver a jugar.
+                    self.contador = 0
+                    self.marcador = 0
+                    self.secuencia = []
+
+
+
 
     def iniciar(self):                   # Lo que hace es REINICIAR todos los valores, ya sea para la 1era, 2da, 3ra o 4ta vez de iniciar el juego.
         self.contador = 0
@@ -64,11 +92,41 @@ class SimonDice:
             
             # El método after, después de la cantidad de MILISEGUNDOS (1000, 1 segundo), llamará a un método que AUMENTARÁ LA DIFICULTAD al añadir un color más.
 
-    def crearColor(self):                # Método para que permite generar un nuevo color para aumentar la dificultad dentro del juego. 
-        print("")
+    def crearColor(self):                      # Método para que permite generar un nuevo color para aumentar la dificultad dentro del juego. 
+        if self.juegoInicial == True:          # Chequea si el juego está iniciado o no.
+            i = 0                              # Variable que recorre todo el arreglo.
+            while i < len(self.secuencia):
+                if self.secuencia[i] == "Verde":
+                    self.cambioColorBoton(self.botonVerde, "black", "green", 500, 500)
+                elif self.secuencia[i] == "Rojo":
+                    self.cambioColorBoton(self.botonRojo, "black", "red", 500, 500)
+                elif self.secuencia[i] == "Amarillo":
+                    self.cambioColorBoton(self.botonAmarillo, "black", "yellow", 500, 500)
+                elif self.secuencia[i] == "Azul":
+                    self.cambioColorBoton(self.botonAzul, "black", "blue", 500, 500)
+
+                i += 1
+                time.sleep(1)                   # Para que no vaya tan rápido, 1 segundo de diferencia en la animación de recorrer las posiciones.
+            aleatorio = random.randrange(0, 4)  # Rango de 0 a 4. Dependiendo del número aleatorio es el botón que se va a encender.
+            self.secuencia.append(self.colores[aleatorio]) 
+            # Al arreglo que está guardando el número de los colores se le agrega un nuevo elemento de una posición random en el arreglo de colores.
+            if self.secuencia[i] == "Verde":    # Como es un nuevo botón y el usuario debe saber qué boton se iluminó
+                self.cambioColorBoton(self.botonVerde, "black", "green", 500, 500)
+            elif self.secuencia[i] == "Rojo":
+                self.cambioColorBoton(self.botonRojo, "black", "red", 500, 500)
+            elif self.secuencia[i] == "Amarillo":
+                self.cambioColorBoton(self.botonAmarillo, "black", "yellow", 500, 500)
+            elif self.secuencia[i] == "Azul":
+                self.cambioColorBoton(self.botonAzul, "black", "blue", 500, 500)
+            # Primero recorre todas las posiciones del arreglo y después agrega un nuevo color.
 
     def cambioColorBoton(self, boton, colorCambio, colorInicial, frecuencia, duracion):#Los últimos 2 parámetros sirven para el sonido al apretar un botón.
-        print("")
+        boton.configure(bg=colorCambio)
+        self.ventana.update()               # Para actualizar el fondo porque hubo un cambio de color, y quiero mostrarlo.
+        self.sonido(frecuencia, duracion)   # El beep suena al hacer el cambio de color.
+        boton.configure(bg=colorInicial)    # Lo manda a su color original.
+        self.ventana.update()              # Se actualiza la ventana para ver ese cambio.
+        
 
     def sonido(self, frecuencia, duracion):
         winsound.Beep(frecuencia, duracion) # La frecuencia determina la tonalidad del sonido (si es alto o bajo), la duración, cuántos segundos durará.
