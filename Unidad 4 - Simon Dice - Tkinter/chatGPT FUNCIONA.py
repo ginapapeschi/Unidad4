@@ -16,15 +16,27 @@ class SimonGame:
         self.start_game()
 
     def create_widgets(self):
-        colors = ["red", "green", "blue", "yellow"]
-        for i in colors:
-            button = tk.Canvas(self.master, bg=i, width=100, height=100, highlightthickness=1, relief="raised")
-            button.bind("<Button-1>", self.player_input)        # "<Button-1>" es por defecto en tkinter. Bind asocia el botón izquierdo a la función.
-            button.pack(side=tk.LEFT, padx=10, pady=10)
-            self.buttons.append(button)
-        self.score_label = tk.Label(self.master, text=f"Puntaje: {self.score}")
-        self.score_label.pack()
-        print(*colors[i:i+2])
+            rows = 2  # Número de filas
+            cols = 2  # Número de columnas (ajustado a 2 para una matriz 2x2)
+            colors = ["red", "green", "blue", "yellow"]  # Lista de colores
+
+            for i, color in enumerate(colors):
+                row = i // cols # Calcula la fila
+                col = i % cols  # Calcula la columna
+                button = tk.Canvas(self.master, bg=color, width=100, height=100, highlightthickness=3, relief="groove")
+                button.bind("<Button-1>", self.player_input)
+                button.grid(row=row, column=col, padx=20, pady=20)
+                self.buttons.append(button)
+
+            # Ajustamos la fila para la etiqueta de puntuación
+            self.score_label = tk.Label(self.master, text="\nMarcador: 0  Mayor puntaje: 0") # Se coloca en 0 porque ya se sabe en qué valor INICIA.
+            opts = { 'ipadx': 10, 'ipady': 10 , 'sticky': 'nswe' }
+            self.score_label.place(x=100, anchor=tk.N, width=100, height=50)
+            #self.score_label = tk.Label(self.master, text=f"Puntaje: {self.score}")
+            #self.score_label.grid(row=rows, column=0, columnspan=cols, pady=10)
+
+        
+
 
     def start_game(self):
         self.sequence.clear()
@@ -50,7 +62,7 @@ class SimonGame:
         self.player_sequence.append(clicked_button)
         self.check_sequence()
 
-    def check_sequence(self):
+    def check_sequence(self):                                                           # fijate esto pacheco pal jeison q hayan mas de 1 coso
         if self.player_sequence != self.sequence[:len(self.player_sequence)]:
             messagebox.showinfo("Game Over", f"Incorrecto! Puntaje: {self.score}")
             self.save_score()
