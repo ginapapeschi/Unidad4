@@ -23,7 +23,7 @@ class SimonGame:
             for i, color in enumerate(colors):
                 row = i // cols # Calcula la fila
                 col = i % cols  # Calcula la columna
-                button = tk.Canvas(self.master, bg=color, width=100, height=100, highlightthickness=3, relief="groove")
+                button = tk.Canvas(self.master, bg=color, width=100, height=100, highlightthickness=3, relief="raised")
                 button.bind("<Button-1>", self.player_input)
                 button.grid(row=row, column=col, padx=20, pady=20)
                 self.buttons.append(button)

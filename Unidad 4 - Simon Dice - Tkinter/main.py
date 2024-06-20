@@ -32,7 +32,10 @@ class SimonDice:
         self.__nombreUsuario = None                     # 19/6
         self.preguntarNombre()                          # 19/6
         self.centrarVentana(self.__ventana)             # 19/6
-        self.__timer = None                             # 19/6
+
+        self.__timer = None                             # 20/6 
+        self.__dificultad = None                        # 20/6
+        self.__tiempoEspera = None                      # 20/6  
 
 
         self.__ventana.configure(background="#f0f0f0")
@@ -98,7 +101,6 @@ class SimonDice:
 
         if self.__nombreUsuario:
             ventanaIngresarNombre.destroy()  # Cerrar la ventana que pregunta el nombre.
-            self.__ventana.deiconify()       # Mostrar la ventana del juego principal.
             self.elegirDificultad()         # 19/6
             self.iniciarBotones()
             self.__labNombre.config(text=f"Nombre: {str(self.__nombreUsuario)}", font=("Comic Sans MS", 10))
@@ -112,12 +114,10 @@ class SimonDice:
     def elegirDificultad(self):
         ventanaElegirDificultad = tk.Toplevel()
         ventanaElegirDificultad.title("Elegir dificultad")
-
         ventanaElegirDificultad.geometry('400x200')  # Ajustar el tamaño de la ventana
 
         label = tk.Label(ventanaElegirDificultad, text="Seleccione una dificultad:", font=("Comic Sans MS", 10))
         label.place(relx=0.5, rely=0.17, anchor=tk.CENTER)
-
         labelFrameSeleccione = ttk.LabelFrame(ventanaElegirDificultad, text='Elija una opción', borderwidth=2, relief='raised', padding=5)
         labelFrameSeleccione.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
@@ -127,33 +127,40 @@ class SimonDice:
         # Variable para almacenar la opción seleccionada
         opcionSeleccionada = tk.StringVar(ventanaElegirDificultad)
         opcionSeleccionada.set(opciones[0])  # Opción por defecto
-
-        optionMenu = ttk.OptionMenu(labelFrameSeleccione, opcionSeleccionada, *opciones)
-        optionMenu.pack(padx=20, pady=10)
-
-        
-        botonConfirmar = ttk.Button(ventanaElegirDificultad, text="Confirmar")  # Falta el comando.
+        opcionMenu = ttk.OptionMenu(labelFrameSeleccione, opcionSeleccionada, *opciones)
+        opcionMenu.pack(padx=20, pady=10)
+        botonConfirmar = ttk.Button(ventanaElegirDificultad, text="Confirmar", command=partial(self.confirmarDificultad, ventanaElegirDificultad, opcionSeleccionada)) # Falta el comando.
         botonConfirmar.place(relx=0.5, rely=0.85, anchor=tk.CENTER)
-
-
         self.centrarVentana(ventanaElegirDificultad)
         ventanaElegirDificultad.resizable(False, False)
+
+
+
+
+
+    #20/6 - Función para confirmar la dificultad elegida.
+    def confirmarDificultad(self, ventanaElegirDificultad, opcion):
+        dificultad = opcion.get()
+        self.__dificultad = dificultad
+
+        if dificultad == 'Principiante':
+            self.__tiempoEspera = 1000
+        elif dificultad == 'Experto':               # TIMER QUE SE REINICIA CUANDO EL JUGADOR APRIETA UN BOTÓN.
+                                                    # CADA VEZ QUE EL SISTEMA AÑADE UN NUEVO BOTÓN SE REINICIA EL TIMER.
+            self.__tiempoEspera = 500
+        elif dificultad == 'Súper Experto':         # CAMBIA DE COLOR DE A 2 BOTONES SIMULTÁNEAMENTE, DEBEN APRETARSE LOS DOS ANTES DE QUE EL     
+                                                    # TIMER SE REINICIE.
+            self.__tiempoEspera = 250
+        print(f"Tiempo de espera: {self.__tiempoEspera}")   # TERMINAL
+        
+        ventanaElegirDificultad.destroy()
+        self.__ventana.deiconify()                  # Mostrar la ventana del juego principal.
+    #
 
 
     
     # INTERFAZ GRÁFICA DEL JUEGO
     def iniciarBotones(self):
-        band = True
-        """
-        # 19/6 - Se colocan en 0 porque ya se sabe en qué valor INICIA.
-        self.__labMarcador = Label(self.__ventana, text="Marcador: 0", font=("Arial", 10))
-        self.__labMarcador.place(relx=0.20, rely=0.010, anchor=tk.NW)
-        self.__labMarcador.destroy()        # Para destruirlo una vez ingresado el nombre.
-
-        self.__labMayorPuntaje = Label(self.__ventana, text="Mayor puntaje: 0", font=("Arial", 10))
-        self.__labMayorPuntaje.place(relx=0.59, rely=0.010, anchor=tk.NW)
-        self.__labMayorPuntaje.destroy()    # Para destruirlo una vez ingresado el nombre.
-        """
 
         # 19/6 ETIQUETAS
         self.__labMarcador = Label(self.__ventana, text=f"Marcador: {self.__marcador}", font=("Comic Sans MS", 10))
@@ -180,15 +187,29 @@ class SimonDice:
         self.__botonAzul = Button(self.__ventana, command=partial(self.presionar,"Azul"), background="#0080ff", highlightthickness=20, relief="raised")
         self.__botonAzul.place(relx=0.72, rely=0.75, relheight=0.45, relwidth=0.4, anchor=tk.CENTER)
 
-        self.__botonIniciar = Button(self.__ventana, command=self.iniciar, bg="white", text="INICIAR", font=("Comic Sans MS", 10)) # "bg" es "background".
+        
+       # 20/6
+        self.__botonVerde.configure(state=tk.DISABLED)  # BLOQUEA LA PRESIÓN DEL BOTÓN VERDE.
+        self.__botonRojo.configure(state=tk.DISABLED)  # BLOQUEA LA PRESIÓN DEL BOTÓN ROJO.
+        self.__botonAmarillo.configure(state=tk.DISABLED)  # BLOQUEA LA PRESIÓN DEL BOTÓN AMARILLO.
+        self.__botonAzul.configure(state=tk.DISABLED)  # BLOQUEA LA PRESIÓN DEL BOTÓN AZUL.
+        #
+
+        self.__botonIniciar = Button(self.__ventana, command=self.iniciar, bg="white", text="INICIAR", font=("Comic Sans MS", 10))
         # Como no se manda parámetros en el command, se pone directamente el método que se va a ejecutar.
         self.__botonIniciar.place(relx=0.505, rely=0.46, relheight=0.1, relwidth=0.2, anchor=tk.N)
+        
+
+
+ 
 
     def presionar(self, color):          # Se ejecuta en el momento en que el usuario presione el botón de alguno de los colores.
+                                         # DEPENDE DE LA DIFICULTAD
+        print("BOTÓN PRESIONADO")
         if self.__juegoInicial == True:    # Sólo se revisa en qué momento el usuario aprieta los botones cuando esta variable sea igual a True.
             if len(self.__secuencia) >= self.__contador - 1: # Ya que el contador va en una posición adelantada.
                 if self.__secuencia[self.__contador] == color: # Color es el parámetro enviado por cada botón al ser presionado (usuario atinó al botón).
-                    self.__contador += 1               # Para que vaya avanzando
+                    self.__contador += 1               # Para que vaya avanzando                        
                     if color == "Verde":
                         self.sonido(600, 500)
                     elif color == "Rojo":
@@ -198,16 +219,26 @@ class SimonDice:
                     elif color == "Azul":
                         self.sonido(800, 500)
                     self.revisarTurno() # Llama a esta función para saber si este botón que presionó el usuario fue el último o faltan más.
-
                     # 19/6
                     self.__labMarcador.config(text=f"Marcador: {str(self.__marcador)}", font=("Comic Sans MS", 10))
                     # Se cambia la etiqueta luego de que el usuario presionó los botones
-
-                    """
-                    self.__etiqueta.config(text=f"Nombre: {self.__nombreUsuario}\nMarcador: " + str(self.__marcador) + "\nMayor puntaje: " + str(self.__puntajeRecord)) 
-                    """
                 else:                   # Si el usuario se equivocó al presionar un botón (DEBE TERMINAR EL JUEGO)
                     self.finalizar()
+
+
+
+
+            """
+            if self.__dificultad == "Principiante":
+            self.__timer = None
+            elif self.__dificultad in ["Experto", "Súper Experto"]:
+                self.__timer = 3
+            """
+
+
+
+
+
 
     def finalizar(self):
         if self.__marcador > self.__puntajeRecord:   # Se establece un nuevo récord en caso de ser así.
@@ -262,6 +293,7 @@ class SimonDice:
         self.__juegoInicial = False # Para que el usuario no siga jugando y deba presionar el botón de INICIAR para volver a jugar.
         self.__ventanaPerdiste.destroy()
         self.__nombreUsuario = None
+        self.__dificultad = None
         self.__botonIniciar.destroy()
         self.preguntarNombre()
         #self.__botonIniciar.after(1600, self.iniciar)  # 19/6 - ELIMINAR
@@ -270,6 +302,14 @@ class SimonDice:
         self.__contador = 0
         self.__marcador = 0
         self.__secuencia = []
+
+        # 20/6 - HABILITA APRETAR BOTONES.
+        self.__botonVerde.configure(state=tk.NORMAL)
+        self.__botonRojo.configure(state=tk.NORMAL)
+        self.__botonAmarillo.configure(state=tk.NORMAL)
+        self.__botonAzul.configure(state=tk.NORMAL)
+        #
+
         self.__juegoInicial = True       # True porque el juego inició.
         self.__botonIniciar.destroy()
 
@@ -296,24 +336,35 @@ class SimonDice:
         self.__botonIniciar.destroy()    # Destruye el botón de INICIO.
         self.crearColor()                # Método para que el usuario EMPIECE A JUGAR.
 
+
+
+
     def revisarTurno(self):
         if len(self.__secuencia) == self.__contador:  # El contador va aumentando conforme el usuario va jugando (cuando hace un punto).
             self.__contador = 0                       # Se setea en 0 porque se iniciará de nuevo.
             self.__marcador += 1                      # Aumenta el marcador porque el usuario apretó los botones correctamente (tiene un punto más).
-            self.__botonIniciar.after(1000, self.crearColor)
+            self.__botonIniciar.after(self.__tiempoEspera, self.crearColor)
+            
             # El método after, después de la cantidad de MILISEGUNDOS (1000, 1 segundo), llamará a un método que AUMENTARÁ LA DIFICULTAD al añadir un color más.
 
+
+
+
     def crearColor(self):                       # Método para que permite generar un nuevo color para aumentar la dificultad dentro del juego. 
+        # 20/6
+        self.__botonVerde.configure(state=tk.DISABLED)
+        self.__botonRojo.configure(state=tk.DISABLED)
+        self.__botonAmarillo.configure(state=tk.DISABLED)
+        self.__botonAzul.configure(state=tk.DISABLED)
+        #
+        
         if self.__juegoInicial == True:         # Chequea si el juego está iniciado o no.
             i = 0                               # Variable que recorre todo el arreglo.
-#            self.__botonIniciar.destroy()
-
             while i < len(self.__secuencia):
                 
                 # 19/6
                 if not self.__juegoInicial:  # Verifica si el juego todavía está en curso, evitando que se realice cualquier procesamiento si el juego no está activo.
                     return
-                
 
                 if self.__secuencia[i] == "Verde":
                     self.cambioColorBoton(self.__botonVerde, "white", "#008080", 500, 500)
@@ -348,13 +399,27 @@ class SimonDice:
             elif self.__secuencia[i] == "Azul":
                 self.cambioColorBoton(self.__botonAzul, "white", "#0080ff", 500, 500)
             # Primero recorre todas las posiciones del arreglo y después agrega un nuevo color.
+            print("SECUENCIA TERMINÓ")
+
+            # 20/6 - HABILITA APRETAR BOTONES.
+            self.__botonVerde.configure(state=tk.NORMAL)
+            self.__botonRojo.configure(state=tk.NORMAL)
+            self.__botonAmarillo.configure(state=tk.NORMAL)
+            self.__botonAzul.configure(state=tk.NORMAL)
+            #
+
+
+
+
+
 
     def cambioColorBoton(self, boton, colorCambio, colorInicial, frecuencia, duracion):#Los últimos 2 parámetros sirven para el sonido al apretar un botón.
         boton.configure(bg=colorCambio)
         self.__ventana.update()               # Para actualizar el fondo porque hubo un cambio de color, y quiero mostrarlo.
         self.sonido(frecuencia, duracion)     # El beep suena al hacer el cambio de color.
         boton.configure(bg=colorInicial)      # Lo manda a su color original.
-        self.__ventana.update()               # Se actualiza la ventana para ver ese cambio. 
+        self.__ventana.update()               # Se actualiza la ventana para ver ese cambio.
+        
 
     def sonido(self, frecuencia, duracion):
         winsound.Beep(frecuencia, duracion)   # La frecuencia determina la tonalidad del sonido (si es alto o bajo), la duración, cuántos segundos durará.
@@ -374,5 +439,3 @@ class SimonDice:
 
 if __name__ == '__main__':
     test = SimonDice()
-
-  
