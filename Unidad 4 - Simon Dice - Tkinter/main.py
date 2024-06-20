@@ -6,6 +6,7 @@ import time                                               # Para las pausas entr
 import winsound                                           # Para ejecutar sonidos al apretar los botones.
 import json
 from functools import partial
+from Temporizador import TemporizadorApp
 
 class SimonDice:
     __ventana: object
@@ -15,6 +16,7 @@ class SimonDice:
     __contador: int
     __juegoInicial: bool
     __colores: list
+    __temporizador: TemporizadorApp
 
     def __init__(self):
         self.__ventana = tk.Tk()            # Se crea una ventana y se le asigna un nuevo constructor de Tk para crear el nuevo frame.
@@ -33,9 +35,10 @@ class SimonDice:
         self.preguntarNombre()                          # 19/6
         self.centrarVentana(self.__ventana)             # 19/6
 
-        self.__timer = None                             # 20/6 
+        self.__timer = 3                                # 20/6 
         self.__dificultad = None                        # 20/6
         self.__tiempoEspera = None                      # 20/6  
+        self.__temporizador = TemporizadorApp(self.__ventana)
 
 
         self.__ventana.configure(background="#f0f0f0")
@@ -126,10 +129,10 @@ class SimonDice:
 
         # Variable para almacenar la opción seleccionada
         opcionSeleccionada = tk.StringVar(ventanaElegirDificultad)
-        opcionSeleccionada.set(opciones[0])  # Opción por defecto
+        opcionSeleccionada.set(opciones[0])                       # Opción por defecto, no se puede elegir.
         opcionMenu = ttk.OptionMenu(labelFrameSeleccione, opcionSeleccionada, *opciones)
         opcionMenu.pack(padx=20, pady=10)
-        botonConfirmar = ttk.Button(ventanaElegirDificultad, text="Confirmar", command=partial(self.confirmarDificultad, ventanaElegirDificultad, opcionSeleccionada)) # Falta el comando.
+        botonConfirmar = ttk.Button(ventanaElegirDificultad, text="Confirmar", command=partial(self.confirmarDificultad, ventanaElegirDificultad, opcionSeleccionada))
         botonConfirmar.place(relx=0.5, rely=0.85, anchor=tk.CENTER)
         self.centrarVentana(ventanaElegirDificultad)
         ventanaElegirDificultad.resizable(False, False)
@@ -161,7 +164,6 @@ class SimonDice:
     
     # INTERFAZ GRÁFICA DEL JUEGO
     def iniciarBotones(self):
-
         # 19/6 ETIQUETAS
         self.__labMarcador = Label(self.__ventana, text=f"Marcador: {self.__marcador}", font=("Comic Sans MS", 10))
         self.__labMarcador.place(relx=0.40, rely=0.011, anchor=tk.NW)
@@ -173,6 +175,8 @@ class SimonDice:
         self.__labNombre.place(relx=0.02, rely=0.011, anchor=tk.NW)
         #
 
+        self.__labTimer = Label(self.__ventana, text=f"Tiempo restante: {self.__timer}", font=("Comic Sans MS", 10))
+        self.__labTimer.place(relx=0.02, rely=0.011, anchor=tk.NW)
 
         # BOTONES
         self.__botonVerde = Button(self.__ventana, command=partial(self.presionar, "Verde"), background="#008080", highlightthickness=20, relief="raised")
@@ -198,14 +202,21 @@ class SimonDice:
         self.__botonIniciar = Button(self.__ventana, command=self.iniciar, bg="white", text="INICIAR", font=("Comic Sans MS", 10))
         # Como no se manda parámetros en el command, se pone directamente el método que se va a ejecutar.
         self.__botonIniciar.place(relx=0.505, rely=0.46, relheight=0.1, relwidth=0.2, anchor=tk.N)
-        
 
+
+
+    def cambiarTimerDificultad(self):
+        if self.__dificultad in ["Experto", "Súper Experto"]:
+            self.__timer = 3        # 5 Segundos
 
  
-
+    # 20/6 - DIFICULTADES
     def presionar(self, color):          # Se ejecuta en el momento en que el usuario presione el botón de alguno de los colores.
-                                         # DEPENDE DE LA DIFICULTAD
-        print("BOTÓN PRESIONADO")
+                                         # DEPENDE DE LA DIFICULTAD se debe REINICIAR EL TIMER
+        self.cambiarTimerDificultad()
+    
+        self.__temporizador.iniciar_temporizador()
+
         if self.__juegoInicial == True:    # Sólo se revisa en qué momento el usuario aprieta los botones cuando esta variable sea igual a True.
             if len(self.__secuencia) >= self.__contador - 1: # Ya que el contador va en una posición adelantada.
                 if self.__secuencia[self.__contador] == color: # Color es el parámetro enviado por cada botón al ser presionado (usuario atinó al botón).
@@ -219,26 +230,17 @@ class SimonDice:
                     elif color == "Azul":
                         self.sonido(800, 500)
                     self.revisarTurno() # Llama a esta función para saber si este botón que presionó el usuario fue el último o faltan más.
+                    
+                    
                     # 19/6
                     self.__labMarcador.config(text=f"Marcador: {str(self.__marcador)}", font=("Comic Sans MS", 10))
+                    self.__labTimer.config(text=f"Tiempo restante: {str(self.__timer)}", font=("Comic Sans MS", 10))
                     # Se cambia la etiqueta luego de que el usuario presionó los botones
                 else:                   # Si el usuario se equivocó al presionar un botón (DEBE TERMINAR EL JUEGO)
                     self.finalizar()
 
-
-
-
-            """
-            if self.__dificultad == "Principiante":
-            self.__timer = None
-            elif self.__dificultad in ["Experto", "Súper Experto"]:
-                self.__timer = 3
-            """
-
-
-
-
-
+        if self.__temporizador.getTiempo() == 3:
+            self.finalizar()
 
     def finalizar(self):
         if self.__marcador > self.__puntajeRecord:   # Se establece un nuevo récord en caso de ser así.
@@ -261,11 +263,9 @@ class SimonDice:
         self.__ventanaPerdiste.resizable(False, False)   # 19/6
 
         self.__juegoInicial = False  # Se asegura de que el juego se detenga.
-
         self.__labNombre.config(text=f"Nombre: {""}", font=("Comic Sans MS", 10)) # Reinicia el Nombre
     
         
-
     #JEISON
         self.guardarPuntaje()
         boton_reiniciar = ttk.Button(self.__ventanaPerdiste, text="REINICIAR JUEGO", command=self.reiniciarJuego)
@@ -273,20 +273,6 @@ class SimonDice:
         boton_salir = ttk.Button(self.__ventanaPerdiste, text='SALIR', command=quit)
         boton_salir.pack(side=tk.RIGHT, padx=20, pady=20)
         
-        
-        
-        
-        """
-        self.__ventanaPerdiste = Tk()
-        self.__ventanaPerdiste.title("Perdiste mogo")
-        self.__ventanaPerdiste.geometry('290x115')
-        ttk.Button(self.__ventanaPerdiste, text="REINICIAR JUEGO", command=self.reiniciarJuego).grid(column=2, row=3, sticky=W)
-        ttk.Button(self.__ventanaPerdiste, text='SALIR', command=quit).grid(column=3, row=3, sticky=W)
-        """
-        
-        #self.__botonReiniciar = Button(self.__ventana, command=self.reiniciarJuego, bg="white", text="REINICIAR JUEGO")
-        #self.__botonReiniciar.place(relx=0.505, rely=0.45, relheight=0.1, relwidth=0.25, anchor=tk.N)
-
 
     def reiniciarJuego(self):
         # SE RESETEAN LOS ATRIBUTOS
@@ -309,6 +295,7 @@ class SimonDice:
         self.__botonAmarillo.configure(state=tk.NORMAL)
         self.__botonAzul.configure(state=tk.NORMAL)
         #
+
 
         self.__juegoInicial = True       # True porque el juego inició.
         self.__botonIniciar.destroy()
@@ -357,7 +344,10 @@ class SimonDice:
         self.__botonAmarillo.configure(state=tk.DISABLED)
         self.__botonAzul.configure(state=tk.DISABLED)
         #
-        
+        print("EMPIEZA SECUENCIA")
+
+        self.__temporizador.detener_temporizador()
+
         if self.__juegoInicial == True:         # Chequea si el juego está iniciado o no.
             i = 0                               # Variable que recorre todo el arreglo.
             while i < len(self.__secuencia):
@@ -401,12 +391,17 @@ class SimonDice:
             # Primero recorre todas las posiciones del arreglo y después agrega un nuevo color.
             print("SECUENCIA TERMINÓ")
 
+
+
             # 20/6 - HABILITA APRETAR BOTONES.
+            #time.sleep(self.__timer)
             self.__botonVerde.configure(state=tk.NORMAL)
             self.__botonRojo.configure(state=tk.NORMAL)
             self.__botonAmarillo.configure(state=tk.NORMAL)
             self.__botonAzul.configure(state=tk.NORMAL)
             #
+            
+            
 
 
 
@@ -439,3 +434,4 @@ class SimonDice:
 
 if __name__ == '__main__':
     test = SimonDice()
+    
